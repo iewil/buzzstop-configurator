@@ -3,184 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <title>ESP32 Bus Alarm Configurator</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    label { display: block; margin: 10px 0 5px; }
-    input, button { padding: 5px; margin: 5px 0; }
-    #output {
-      margin-top: 20px;
-      white-space: pre-wrap;
-      background: #f4f4f4;
-      border: 1px solid #ccc;
-      padding: 10px;
-      height: 200px;
-      overflow-y: auto;
-    }
-    #busStopResults {
-      margin-top: 10px;
-      background: #eef;
-      border: 1px solid #99c;
-      padding: 10px;
-    }
-    .bus-stop-option {
-      cursor: pointer;
-      padding: 5px;
-      margin-bottom: 5px;
-      border-bottom: 1px solid #ccc;
-    }
-    .bus-stop-option:hover {
-      background-color: #dde;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>ESP32 Bus Alarm Configurator</h1>
-  <button id="connectBtn">Connect to Device</button>
-  <div>
-    <label>Bus Stop Code (e.g., 11149):</label>
-    <input type="text" id="busStop" value="11149" required>
-    <button id="findNearbyBtn">Find Nearby Bus Stops</button>
+  <div class="container">
+    <h1>ESP32 Bus Alarm Configurator</h1>
+    <button id="connectBtn" class="primary">Connect to Device</button>
+
+    <div class="form-group">
+      <label>Bus Stop Code</label>
+      <input type="text" id="busStop" value="11149">
+      <button id="findNearbyBtn" class="secondary small">Find Nearby Bus Stops</button>
+    </div>
+
+    <div id="busStopResults"></div>
+
+    <div class="form-group">
+      <label>Service Number</label>
+      <input type="text" id="serviceNo" value="195">
+    </div>
+
+    <div class="form-group">
+      <label>Start Time (HH:MM)</label>
+      <input type="text" id="startTime" value="21:50">
+    </div>
+
+    <div class="form-group">
+      <label>End Time (HH:MM)</label>
+      <input type="text" id="endTime" value="22:30">
+    </div>
+
+    <div class="form-group">
+      <label>Lead Time (minutes)</label>
+      <input type="number" id="leadTime" value="5">
+    </div>
+
+    <button id="submitBtn" class="primary" disabled>Submit</button>
+
+    <pre id="output" class="console"></pre>
   </div>
-  <div id="busStopResults"></div>
-  <div>
-    <label>Service Number (e.g., 195):</label>
-    <input type="text" id="serviceNo" value="195" required>
-  </div>
-  <div>
-    <label>Start Time (HH:MM, e.g., 21:50):</label>
-    <input type="text" id="startTime" value="21:50" placeholder="HH:MM" required>
-  </div>
-  <div>
-    <label>End Time (HH:MM, e.g., 22:30):</label>
-    <input type="text" id="endTime" value="22:30" placeholder="HH:MM" required>
-  </div>
-  <div>
-    <label>Lead Time (minutes, e.g., 5):</label>
-    <input type="number" id="leadTime" value="5" required>
-  </div>
-  <button id="submitBtn" disabled>Submit</button>
-  <div id="output"></div>
 
-  <script>
-    let port;
-    let writer;
-    let serialBuffer = "";
-
-    function formatTime(minutes) {
-      const h = String(Math.floor(minutes / 60)).padStart(2, '0');
-      const m = String(minutes % 60).padStart(2, '0');
-      return `${h}:${m}`;
-    }
-
-    function applyPreferences(prefText) {
-      const lines = prefText.trim().split('\n');
-      const prefs = {};
-
-      lines.forEach(line => {
-        const [key, value] = line.split('=');
-        if (key && value) prefs[key.trim()] = value.trim();
-      });
-
-      if (prefs.BUSSTOP) document.getElementById('busStop').value = prefs.BUSSTOP;
-      if (prefs.SERVICE) document.getElementById('serviceNo').value = prefs.SERVICE;
-      if (prefs.START) document.getElementById('startTime').value = formatTime(Number(prefs.START));
-      if (prefs.END) document.getElementById('endTime').value = formatTime(Number(prefs.END));
-      if (prefs.LEADTIME) document.getElementById('leadTime').value = prefs.LEADTIME;
-    }
-
-    async function connectDevice() {
-      try {
-        port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 115200 });
-        writer = port.writable.getWriter();
-        document.getElementById('connectBtn').disabled = true;
-        document.getElementById('submitBtn').disabled = false;
-        readSerial();
-        log('Connected to ESP32');
-        await sendCommand('GET_PREFS');
-      } catch (e) {
-        log('Error connecting: ' + e.message);
-      }
-    }
-
-    async function sendCommand(command) {
-      const encoder = new TextEncoder();
-      await writer.write(encoder.encode(command + '\n'));
-    }
-
-    async function readSerial() {
-      const textDecoder = new TextDecoderStream();
-      const reader = textDecoder.readable.getReader();
-      port.readable.pipeTo(textDecoder.writable);
-
-      try {
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          if (value) {
-            serialBuffer += value;
-            log(value);
-            if (serialBuffer.includes("LEADTIME=")) {
-              applyPreferences(serialBuffer);
-              serialBuffer = "";
-            }
-          }
-        }
-      } catch (e) {
-        log('Read error: ' + e.message);
-      } finally {
-        reader.releaseLock();
-      }
-    }
-
-    function log(message) {
-      const output = document.getElementById('output');
-      output.textContent += message;
-      output.scrollTop = output.scrollHeight;
-    }
-
-    function parseTime(timeStr) {
-      const [hours, minutes] = timeStr.split(':').map(Number);
-      return (hours * 60) + minutes;
-    }
-
-    document.getElementById('connectBtn').addEventListener('click', connectDevice);
-
-    document.getElementById('submitBtn').addEventListener('click', () => {
-      const busStop = document.getElementById('busStop').value.trim();
-      const serviceNo = document.getElementById('serviceNo').value.trim();
-      const startTime = document.getElementById('startTime').value.trim();
-      const endTime = document.getElementById('endTime').value.trim();
-      const leadTime = document.getElementById('leadTime').value.trim();
-
-      if (!busStop || !serviceNo || !startTime || !endTime || !leadTime) {
-        alert('Please fill in all fields.');
-        return;
-      }
-
-      sendCommand(`SET_BUSSTOP=${busStop}`);
-      sendCommand(`SET_SERVICE=${serviceNo}`);
-      sendCommand(`SET_START=${parseTime(startTime)}`);
-      sendCommand(`SET_END=${parseTime(endTime)}`);
-      sendCommand(`SET_LEADTIME=${leadTime}`);
-    });
-
-    // Placeholder for Find Nearby Bus Stops
-    document.getElementById('findNearbyBtn').addEventListener('click', () => {
-      if (!navigator.geolocation) {
-        alert('Geolocation is not supported by your browser.');
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        const { latitude, longitude } = position.coords;
-        log(`Your location: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}\n`);
-        const resultsDiv = document.getElementById('busStopResults');
-        resultsDiv.innerHTML = '<em>(Nearby bus stop logic not implemented)</em>';
-      }, (error) => {
-        alert('Unable to retrieve your location: ' + error.message);
-      });
-    });
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
