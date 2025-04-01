@@ -88,6 +88,9 @@ document.getElementById('submitBtn').addEventListener('click', () => {
   const startTime = document.getElementById('startTime').value.trim();
   const endTime = document.getElementById('endTime').value.trim();
   const leadTime = document.getElementById('leadTime').value.trim();
+  const wifiSSID = document.getElementById('wifiSSID').value.trim(); 
+  const wifiPassword = document.getElementById('wifiPassword').value.trim(); 
+
 
   if (!busStop || !serviceNo || !startTime || !endTime || !leadTime) {
     alert('Please fill in all fields.');
@@ -99,6 +102,8 @@ document.getElementById('submitBtn').addEventListener('click', () => {
   sendCommand(`SET_START=${parseTime(startTime)}`);
   sendCommand(`SET_END=${parseTime(endTime)}`);
   sendCommand(`SET_LEADTIME=${leadTime}`);
+  sendCommand(`SET_WIFI_SSID=${wifiSSID}`); 
+  sendCommand(`SET_WIFI_PASSWORD=${wifiPassword}`); 
 });
 
 // Placeholder for Find Nearby Bus Stops
