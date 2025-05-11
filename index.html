@@ -9,33 +9,39 @@
   <div class="container">
     <h1>ESP32 Bus Alarm Configurator</h1>
     <button id="connectBtn" class="primary">Connect to Device</button>
+    <button id="disconnectBtn" class="secondary">Disconnect from Device</button>
 
     <div class="form-group">
       <label>Bus Stop Code</label>
-      <input type="text" id="busStop" value="11149">
+      <input type="text" id="busStop" value="">
       <button id="findNearbyBtn" class="secondary small">Find Nearby Bus Stops</button>
     </div>
 
     <div id="busStopResults"></div>
 
     <div class="form-group">
-      <label>Service Number</label>
-      <input type="text" id="serviceNo" value="195">
+      <label>Service Number 1</label>
+      <input type="text" id="serviceNo1" value="">
+    </div>
+
+    <div class="form-group">
+      <label>Service Number 2</label>
+      <input type="text" id="serviceNo2" value="">
     </div>
 
     <div class="form-group">
       <label>Start Time (HH:MM)</label>
-      <input type="text" id="startTime" value="21:50">
+      <input type="text" id="startTime" value="">
     </div>
 
     <div class="form-group">
       <label>End Time (HH:MM)</label>
-      <input type="text" id="endTime" value="22:30">
+      <input type="text" id="endTime" value="">
     </div>
 
     <div class="form-group">
       <label>Lead Time (minutes)</label>
-      <input type="number" id="leadTime" value="5">
+      <input type="number" id="leadTime" value="">
     </div>
 
     <!-- New fields for WiFi SSID and Password -->
