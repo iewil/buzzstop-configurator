@@ -32,7 +32,9 @@ async function connectDevice() {
     await port.open({ baudRate: 115200 });
     writer = port.writable.getWriter();
     document.getElementById('connectBtn').disabled = true;
+    document.getElementById('disconnectBtn').disabled = false;
     document.getElementById('submitBtn').disabled = false;
+    document.getElementById('updateFirmwareBtn').disabled = false;
     readSerial();
     log('Connected to ESP32');
     await sendCommand('GET_PREFS');
@@ -55,6 +57,7 @@ async function disconnectDevice() {
     document.getElementById('connectBtn').disabled = false;
     document.getElementById('disconnectBtn').disabled = true;
     document.getElementById('submitBtn').disabled = true;
+    document.getElementById('updateFirmwareBtn').disabled = true;
     log('Disconnected from ESP32\n');
   } catch (e) {
     log('Error disconnecting: ' + e.message + '\n');
@@ -163,8 +166,19 @@ function applyPreferencesFromBuffer() {
   });
 }
 
+async function updateFirmware() {
+  try {
+    log('Sending firmware update command...\n');
+    await sendCommand('UPDATE_FIRMWARE');
+    log('Firmware update command sent successfully\n');
+  } catch (e) {
+    log('Error sending firmware update command: ' + e.message + '\n');
+  }
+}
+
 document.getElementById('connectBtn').addEventListener('click', connectDevice);
 document.getElementById('disconnectBtn').addEventListener('click', disconnectDevice);
+document.getElementById('updateFirmwareBtn').addEventListener('click', updateFirmware);
 
 document.getElementById('submitBtn').addEventListener('click', () => {
   const busStop = document.getElementById('busStop').value.trim();
